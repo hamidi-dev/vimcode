@@ -2,6 +2,7 @@
 import { createSignal } from "solid-js"
 import type { TuiPluginModule } from "@opencode-ai/plugin/tui"
 import { ModeIndicator } from "./indicator"
+import { writeClipboard } from "./clipboard"
 
 type Mode = "normal" | "insert"
 type Operator = "d" | "c" | "y" | null
@@ -88,24 +89,6 @@ const plugin: TuiPluginModule = {
       return getPromptText().split("\n")[n] ?? ""
     }
 
-    function copyToClipboard(text: string) {
-      try {
-        const proc = globalThis.Bun
-          ? globalThis.Bun.spawn(["pbcopy"], { stdin: "pipe" })
-          : null
-        if (proc) {
-          proc.stdin.write(text)
-          proc.stdin.end()
-        }
-      } catch {
-        // Fallback: try child_process
-        try {
-          require("child_process").execSync("pbcopy", { input: text })
-        } catch { /* clipboard unavailable */ }
-      }
-      yankRegister = text
-    }
-
     // ── Key intercept ───────────────────────────────────────────
     api.keymap.intercept(
       "key",
@@ -171,7 +154,7 @@ const plugin: TuiPluginModule = {
 
         // ── Paste ──
         if (key === "p") {
-          if (yankRegister) copyToClipboard(yankRegister)
+          if (yankRegister) writeClipboard(yankRegister)
           dispatch("prompt.paste")
           resetPending()
           return
@@ -200,7 +183,9 @@ const plugin: TuiPluginModule = {
               for (let i = 0; i < n; i++) {
                 lines.push(getLine(lineTracker + i))
               }
-              copyToClipboard(lines.join("\n") + "\n")
+              const text = lines.join("\n") + "\n"
+              yankRegister = text
+              writeClipboard(text)
               api.ui?.toast?.({ message: `${n} line${n > 1 ? "s" : ""} yanked`, variant: "info", duration: 1000 })
             } else {
               dispatchN("input.delete.line", n)
