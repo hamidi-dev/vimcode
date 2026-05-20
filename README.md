@@ -14,7 +14,7 @@ In normal mode, keys are vim commands. Unrecognized keys get swallowed so you do
 
 ## Current gaps
 
-**No persistent mode indicator.** Mode switches show a brief toast ("NORMAL" / "INSERT") that fades after about a second. There's no always-visible indicator in distributed installs. When running from source (`just dev`), a colored label appears in the prompt bar, but distributed plugins can't import the host's SolidJS runtime to render slot UI — an upstream limitation affecting all externally installed TUI plugins.
+**No persistent mode indicator.** Mode switches show a brief toast ("NORMAL" / "INSERT") that fades after about a second. There's no always-visible indicator because the plugin API can't render slot UI without importing the host's SolidJS runtime, which isn't available to externally installed plugins.
 
 **No cursor shape change.** The cursor stays a line in both modes instead of switching to a block in normal mode. opentui's renderer supports `setCursorStyle`, and `api.renderer` is exposed to plugins, so this should be fixable — just not implemented yet.
 
