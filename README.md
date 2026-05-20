@@ -84,11 +84,9 @@ Counts work here too: `2dd` deletes 2 lines, `d3w` deletes 3 words.
 - Cursor shape -- no way to show a block cursor in normal mode
 - `yy` accuracy -- line position is tracked with a shadow counter that drifts on clicks and arrow keys
 
-## Known limitation: no mode indicator bar
+## Known limitation: mode indicator in distributed installs
 
-OpenCode's TUI plugin system doesn't resolve host packages (`solid-js`, `@opentui/solid`) for externally installed plugins. This means vimcode can't render a persistent mode indicator in the prompt bar — it would need SolidJS for reactive UI. Instead, mode switches show a brief toast notification. This is an [upstream limitation](https://github.com/sst/opencode/issues/TBD) that affects all TUI plugins distributed via git or npm.
-
-When running from source (`just dev`), vimcode has full access to the host runtime and could support a bar indicator. For now, the toast works everywhere.
+OpenCode's TUI plugin system doesn't resolve host packages (`solid-js`, `@opentui/solid`) for externally installed plugins. vimcode uses dynamic `import()` with a fallback: when running from source (`just dev`), the colored mode indicator appears in the prompt bar. When installed via git or npm, imports fail silently and mode switches show a brief toast instead. This is an upstream limitation that affects all TUI plugins distributed via git or npm.
 
 ## Escape behavior
 

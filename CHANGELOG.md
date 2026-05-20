@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4] — 2026-05-20
+
+### Added
+
+- Colored mode indicator in the prompt bar when running from source (`just dev`). Uses dynamic `import()` to load host runtime modules (`solid-js`, `@opentui/solid`) — resolves via opencode's runtime module plugin in local dev, falls back to toast for git/npm installs where the cache path blocks resolution.
+
 ## [0.1.3] — 2026-05-20
 
 ### Fixed
@@ -60,7 +66,8 @@ First release. Brings modal editing to the OpenCode prompt — normal mode, inse
 
 > **Known limitations:** this is a v0 release. `g` fires immediately as buffer-home instead of waiting for `gg`. The line tracker used by `yy` drifts when the cursor moves via clicks or arrow keys. Visual mode and text objects aren't feasible without cursor position access from the plugin API.
 
-[Unreleased]: https://github.com/oribarilan/vimcode/compare/v0.1.3...HEAD
+[Unreleased]: https://github.com/oribarilan/vimcode/compare/v0.1.4...HEAD
+[0.1.4]: https://github.com/oribarilan/vimcode/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/oribarilan/vimcode/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/oribarilan/vimcode/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/oribarilan/vimcode/compare/v0.1.0...v0.1.1

@@ -2,10 +2,29 @@ import type { TuiPluginModule } from "@opencode-ai/plugin/tui"
 import { createVimState, translateKey, handleInsertKey, handleNormalKey, type Action, type Mode } from "./vim"
 import { writeClipboard, readClipboard } from "./clipboard"
 
+// Try loading host runtime modules for the slot indicator. These resolve when
+// running from source (just dev) via opencode's runtime module plugin, but fail
+// for git/npm installs where the cache path isn't covered by onResolve hooks.
+async function tryLoadHostModules() {
+  try {
+    const [solidJs, opentui] = await Promise.all([
+      import("solid-js"),
+      import("@opentui/solid"),
+    ])
+    return { createSignal: solidJs.createSignal, ...opentui }
+  } catch {
+    return null
+  }
+}
+
 const plugin: TuiPluginModule = {
   id: "vimcode",
   tui: async (api) => {
     const state = createVimState()
+    const host = await tryLoadHostModules()
+
+    // Mode change callback — set by the indicator if host modules loaded
+    let onModeChange: ((mode: Mode) => void) | null = null
 
     const prompt = {
       getLine: (n: number) => (api.prompt?.current?.input ?? "").split("\n")[n] ?? "",
@@ -19,7 +38,8 @@ const plugin: TuiPluginModule = {
             setTimeout(() => api.keymap.dispatchCommand(action.cmd), 0)
             break
           case "mode":
-            api.ui?.toast?.({ message: action.mode.toUpperCase(), variant: "info", duration: 800 })
+            if (onModeChange) onModeChange(action.mode)
+            else api.ui?.toast?.({ message: action.mode.toUpperCase(), variant: "info", duration: 800 })
             break
           case "toast":
             api.ui?.toast?.({ message: action.message, variant: "info", duration: action.duration ?? 2000 })
@@ -28,7 +48,6 @@ const plugin: TuiPluginModule = {
             writeClipboard(action.text)
             break
           case "insert":
-            // Save clipboard, write insert text, paste, restore original clipboard
             readClipboard().then((saved) => {
               writeClipboard(action.text)
               setTimeout(() => {
@@ -39,6 +58,35 @@ const plugin: TuiPluginModule = {
             break
         }
       }
+    }
+
+    if (host) {
+      const [mode, setMode] = host.createSignal<Mode>(state.mode)
+      onModeChange = (m) => setMode(m)
+
+      const indicator = () => {
+        const el = host.createElement("box")
+        const textEl = host.createElement("text")
+        host.insert(el, textEl)
+        host.setProp(el, "paddingLeft", 1)
+        host.setProp(el, "paddingRight", 1)
+        host.effect(() => {
+          const color = mode() === "normal"
+            ? api.theme.current.warning
+            : api.theme.current.success
+          host.setProp(textEl, "fg", color)
+          host.setProp(textEl, "bold", true)
+        })
+        host.insert(textEl, () => mode() === "normal" ? "NORMAL" : "INSERT")
+        return el
+      }
+
+      api.slots.register({
+        slots: {
+          session_prompt_right: indicator,
+          home_prompt_right: indicator,
+        },
+      })
     }
 
     api.keymap.intercept(
