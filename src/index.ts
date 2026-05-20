@@ -94,6 +94,14 @@ const plugin: TuiPluginModule = {
       (ctx) => {
         if (ctx.event.eventType === "release") return
 
+        // The question UI registers its own layer bindings for j/k/Enter/Escape.
+        // Pass through all keys so that layer can handle them.
+        const route = api.route.current
+        if (route.name === "session") {
+          const q = api.state.session.question(route.params.sessionID)
+          if (q && q.length > 0) return
+        }
+
         // Let autocomplete handle Enter/Escape before vim consumes them.
         // dispatchCommand returns { ok } — true when the autocomplete layer
         // is active and handled the command, false when it's hidden/disabled.
