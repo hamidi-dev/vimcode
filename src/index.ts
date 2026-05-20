@@ -1,15 +1,11 @@
-import { createSignal } from "solid-js"
-import { createComponent } from "@opentui/solid"
 import type { TuiPluginModule } from "@opencode-ai/plugin/tui"
 import { createVimState, translateKey, handleInsertKey, handleNormalKey, type Action, type Mode } from "./vim"
 import { writeClipboard, readClipboard } from "./clipboard"
-import { ModeIndicator } from "./indicator"
 
 const plugin: TuiPluginModule = {
   id: "vimcode",
   tui: async (api) => {
     const state = createVimState()
-    const [mode, setMode] = createSignal<Mode>(state.mode)
 
     const prompt = {
       getLine: (n: number) => (api.prompt?.current?.input ?? "").split("\n")[n] ?? "",
@@ -23,7 +19,7 @@ const plugin: TuiPluginModule = {
             setTimeout(() => api.keymap.dispatchCommand(action.cmd), 0)
             break
           case "mode":
-            setMode(action.mode)
+            api.ui?.toast?.({ message: action.mode.toUpperCase(), variant: "info", duration: 800 })
             break
           case "toast":
             api.ui?.toast?.({ message: action.message, variant: "info", duration: action.duration ?? 2000 })
@@ -58,17 +54,6 @@ const plugin: TuiPluginModule = {
       },
       { priority: 10_000 },
     )
-
-    const indicator = () => createComponent(ModeIndicator, {
-      get mode() { return mode() },
-      get theme() { return api.theme },
-    })
-    api.slots.register({
-      slots: {
-        session_prompt_right: indicator,
-        home_prompt_right: indicator,
-      },
-    })
   },
 }
 

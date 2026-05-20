@@ -20,16 +20,15 @@ vimcode is a TUI plugin for [OpenCode](https://opencode.ai). Before working on i
 - `dispatchCommand()` from inside a `key:before` intercept doesn't work for cursor movement. Wrap in `setTimeout(..., 0)` to break out of the intercept stack.
 - `registerLayer` with `activeWhen` using SolidJS signals requires `reactiveMatcherFromSignal` from `@opentui/keymap/solid`. Plain `() => signal()` doesn't trigger re-evaluation. We chose intercepts instead of layers to avoid this.
 - The plugin API exposes no cursor position. `api.prompt.current.input` gives text content only. No `setCursor`, no `getSelection`. This limits what vim operations we can implement.
-- **No JSX in plugin source.** OpenCode's Bun solid transform plugin (`onLoad` for `.tsx`) doesn't intercept files loaded from the `~/.cache/opencode/packages/` path used for git-installed plugins. The `@jsxImportSource` pragma causes Bun to resolve `@opentui/solid/jsx-dev-runtime` natively, which fails because that subpath only exports type declarations. Use programmatic rendering (`createElement`, `createComponent`, `insert`, `setProp`, `effect` from `@opentui/solid`) instead of JSX. The runtime module plugin handles bare `@opentui/solid` imports via `onResolve`.
+- **No external runtime imports in distributed plugins.** OpenCode's Bun runtime module plugin (`onResolve` hooks for `solid-js`, `@opentui/solid`, etc.) doesn't intercept imports from files loaded from `~/.cache/opencode/packages/`. Any import from `solid-js` or `@opentui/solid` fails with `Cannot find module`. Use only the `api` parameter and local modules. Mode feedback uses `api.ui.toast()` instead of a slot indicator. This limitation affects all git/npm-installed TUI plugins, not just vimcode.
 
 ## Architecture
 
 ```
 src/
-  index.ts       (72 lines)   Plugin entry: intercept registration, action application, slot wiring
-  vim.ts         (316 lines)  Pure vim engine: state, handlers, command tables, types
-  clipboard.ts   (11 lines)   writeClipboard() via pbcopy — platform I/O only
-  indicator.ts   (21 lines)   ModeIndicator component — programmatic rendering
+  index.ts       (59 lines)   Plugin entry: intercept registration, action application
+  vim.ts         (319 lines)  Pure vim engine: state, handlers, command tables, types
+  clipboard.ts   (11 lines)   writeClipboard()/readClipboard() via pbcopy/pbpaste
 test/
   vim.test.ts    (396 lines)  Characterization tests for all key handling branches
 ```
@@ -99,7 +98,7 @@ The `dev-tui.json` config is picked up only by `just dev`. Running `opencode` no
 
 **No classes.** Use plain objects for state (`VimState`), plain functions for behavior. Pass state by reference, mutate it directly. Return results as data.
 
-**Single responsibility per file.** `vim.ts` owns all key handling logic and state transitions. `index.ts` owns all OpenCode API interaction. `clipboard.ts` owns platform I/O. `indicator.ts` owns the mode indicator rendering. Don't mix these concerns.
+**Single responsibility per file.** `vim.ts` owns all key handling logic and state transitions. `index.ts` owns all OpenCode API interaction. `clipboard.ts` owns platform I/O. Don't mix these concerns.
 
 **Comments explain why, not what.** The code should read clearly without narration. Reserve comments for non-obvious decisions (like why `setTimeout` is needed for dispatch, or why `g` doesn't wait for a second keypress).
 

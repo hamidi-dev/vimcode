@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3] — 2026-05-20
+
+### Fixed
+
+- Git URL installation now works. Removed all external runtime imports (`solid-js`, `@opentui/solid`) — OpenCode's runtime module plugin doesn't resolve host packages for cache-installed plugins.
+
+### Changed
+
+- Mode indicator replaced with toast notifications. The prompt bar indicator required SolidJS imports that can't resolve from the plugin cache. Toast shows "NORMAL" or "INSERT" briefly on each mode switch.
+
+### Removed
+
+- `indicator.ts` — no longer needed without the slot-based indicator.
+
 ## [0.1.2] — 2026-05-19
 
 ### Fixed
@@ -46,7 +60,8 @@ First release. Brings modal editing to the OpenCode prompt — normal mode, inse
 
 > **Known limitations:** this is a v0 release. `g` fires immediately as buffer-home instead of waiting for `gg`. The line tracker used by `yy` drifts when the cursor moves via clicks or arrow keys. Visual mode and text objects aren't feasible without cursor position access from the plugin API.
 
-[Unreleased]: https://github.com/oribarilan/vimcode/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/oribarilan/vimcode/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/oribarilan/vimcode/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/oribarilan/vimcode/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/oribarilan/vimcode/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/oribarilan/vimcode/releases/tag/v0.1.0

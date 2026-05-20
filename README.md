@@ -4,7 +4,7 @@ Vim keybindings for the [OpenCode](https://opencode.ai) prompt. Early beta, thin
 
 ## What it does
 
-Adds normal/insert mode to OpenCode's prompt input. Escape goes to normal mode, `i` goes back to insert. The current mode shows in the prompt bar.
+Adds normal/insert mode to OpenCode's prompt input. Escape goes to normal mode, `i` goes back to insert. Mode switches show a brief toast notification.
 
 In insert mode, typing works as usual. Enter inserts a newline (Ctrl+Enter submits), Tab inserts a tab character, and Escape switches to normal.
 
@@ -84,13 +84,19 @@ Counts work here too: `2dd` deletes 2 lines, `d3w` deletes 3 words.
 - Cursor shape -- no way to show a block cursor in normal mode
 - `yy` accuracy -- line position is tracked with a shadow counter that drifts on clicks and arrow keys
 
+## Known limitation: no mode indicator bar
+
+OpenCode's TUI plugin system doesn't resolve host packages (`solid-js`, `@opentui/solid`) for externally installed plugins. This means vimcode can't render a persistent mode indicator in the prompt bar — it would need SolidJS for reactive UI. Instead, mode switches show a brief toast notification. This is an [upstream limitation](https://github.com/sst/opencode/issues/TBD) that affects all TUI plugins distributed via git or npm.
+
+When running from source (`just dev`), vimcode has full access to the host runtime and could support a bar indicator. For now, the toast works everywhere.
+
 ## Escape behavior
 
 First Escape in insert mode switches to normal. It doesn't trigger the double-escape interrupt. From insert mode you need 3 escapes to cancel a running response: one to enter normal, two more for the interrupt.
 
 ## How it works
 
-vimcode is a [TUI plugin](https://opencode.ai/docs/plugins/) built on OpenCode's `@opentui` stack. It registers a key intercept that captures every keypress in the prompt. A pure handler in `src/vim.ts` decides what to do based on the current mode and key — it returns a list of actions (move cursor, delete word, switch mode, etc.) without touching the API directly. The plugin entry in `src/index.tsx` dispatches those actions through `@opentui/keymap` commands and wires a mode indicator into the prompt bar.
+vimcode is a [TUI plugin](https://opencode.ai/docs/plugins/) built on OpenCode's `@opentui` stack. It registers a key intercept that captures every keypress in the prompt. A pure handler in `src/vim.ts` decides what to do based on the current mode and key — it returns a list of actions (move cursor, delete word, switch mode, etc.) without touching the API directly. The plugin entry in `src/index.ts` dispatches those actions through `@opentui/keymap` commands and shows mode changes via toast notifications.
 
 ## Contributing
 
