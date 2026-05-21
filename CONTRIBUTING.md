@@ -44,10 +44,12 @@ Releases are manual.
 3. Move `[Unreleased]` entries into a new `## [X.Y.Z] — YYYY-MM-DD` section.
 4. Update link references at the bottom of CHANGELOG.md.
 5. Bump version in `package.json` (`npm version X.Y.Z --no-git-tag-version`).
-6. Run `bun test`.
-7. Commit: `Release vX.Y.Z: <one-line summary>`.
-8. Tag: `git tag vX.Y.Z`
-9. Push: `git push origin main vX.Y.Z`
+6. Bump `VERSION` in `src/version.ts` to match.
+7. Update the version tag in `README.md`'s install snippet.
+8. Run `bun test`.
+9. Commit: `Release vX.Y.Z: <one-line summary>`.
+10. Tag: `git tag vX.Y.Z`
+11. Push: `git push origin main vX.Y.Z`
 
 ## Distribution
 

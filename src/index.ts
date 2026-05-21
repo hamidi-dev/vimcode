@@ -1,6 +1,7 @@
 import type { TuiPluginModule } from "@opencode-ai/plugin/tui"
 import { createVimState, translateKey, handleInsertKey, handleNormalKey, type Action, type Mode } from "./vim"
 import { writeClipboard, readClipboard } from "./clipboard"
+import { checkForUpdate } from "./version"
 
 const plugin: TuiPluginModule = {
   id: "vimcode",
@@ -40,19 +41,19 @@ const plugin: TuiPluginModule = {
       }
     }
 
-    // Override cursor style after each render frame. The Textarea's
-    // renderCursor() hardcodes "block" every frame, so we re-apply the
-    // mode-appropriate style via direct ANSI escape after the Zig
-    // renderer flushes each frame.
-    const cursorPostProcess = () => {
-      // DECSCUSR: \x1b[2 q = steady block, \x1b[6 q = steady bar
+    // The Textarea's renderCursor() hardcodes "block" on every frame.
+    // api.renderer.addPostProcessFn would be ideal but isn't reliably
+    // available for git-installed plugins. Instead, re-apply the correct
+    // DECSCUSR escape on a short interval. 4 bytes at 100ms is negligible.
+    const cursorInterval = setInterval(() => {
       process.stdout.write(state.mode === "normal" ? "\x1b[2 q" : "\x1b[6 q")
-    }
-    api.renderer?.addPostProcessFn?.(cursorPostProcess)
+    }, 100)
     api.lifecycle?.onDispose?.(() => {
-      api.renderer?.removePostProcessFn?.(cursorPostProcess)
+      clearInterval(cursorInterval)
       process.stdout.write("\x1b[2 q")
     })
+
+    checkForUpdate((opts) => api.ui?.toast?.(opts))
 
     api.keymap.intercept(
       "key",

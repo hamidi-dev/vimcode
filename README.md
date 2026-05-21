@@ -24,9 +24,11 @@ Add to your `tui.json` (or `.opencode/tui.json`):
 
 ```json
 {
-  "plugin": ["vimcode@git+https://github.com/oribarilan/vimcode.git"]
+  "plugin": ["vimcode@git+https://github.com/oribarilan/vimcode.git#v0.3.1"]
 }
 ```
+
+To upgrade, change the version tag and restart OpenCode. The plugin will show a toast when a newer version is available.
 
 ## What works
 
