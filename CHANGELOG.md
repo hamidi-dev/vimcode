@@ -8,6 +8,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ## [Unreleased]
 
+## [0.3.3] — 2026-05-21
+
+### Fixed
+
+- Update check now uses GitHub API instead of raw.githubusercontent.com, which caches content for up to 5 minutes.
+
 ## [0.3.2] — 2026-05-21
 
 _No user-facing changes. Version bump to test the update notification._
@@ -112,7 +118,8 @@ First release. Modal editing for the OpenCode prompt.
 
 > `g` fires immediately as buffer-home instead of waiting for `gg`. The `yy` line tracker drifts on clicks and arrow keys. Visual mode and text objects aren't feasible without cursor position access.
 
-[Unreleased]: https://github.com/oribarilan/vimcode/compare/v0.3.2...HEAD
+[Unreleased]: https://github.com/oribarilan/vimcode/compare/v0.3.3...HEAD
+[0.3.3]: https://github.com/oribarilan/vimcode/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/oribarilan/vimcode/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/oribarilan/vimcode/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/oribarilan/vimcode/compare/v0.2.2...v0.3.0
