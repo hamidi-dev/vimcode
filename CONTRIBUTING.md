@@ -50,6 +50,7 @@ Releases are manual.
 9. Commit: `Release vX.Y.Z: <one-line summary>`.
 10. Tag: `git tag vX.Y.Z`
 11. Push: `git push origin main vX.Y.Z`
+12. Create a GitHub release: `gh release create vX.Y.Z --title "vX.Y.Z" --latest --notes "<changelog section for this version>"`
 
 ## Distribution
 
