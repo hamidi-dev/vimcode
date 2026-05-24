@@ -34,6 +34,9 @@ const plugin: TuiPluginModule = {
           case "yank":
             writeClipboard(action.text)
             break
+          case "insertText":
+            api.renderer?.currentFocusedEditor?.insertText?.(action.text)
+            break
           case "yankSelection": {
             const editor = api.renderer?.currentFocusedEditor
             const text = editor?.editorView?.getSelectedText?.() ?? ""

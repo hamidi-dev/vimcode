@@ -6,6 +6,7 @@ export type Action =
   | { type: "mode"; mode: Mode }
   | { type: "toast"; message: string; duration?: number }
   | { type: "yank"; text: string }
+  | { type: "insertText"; text: string }
   | { type: "yankSelection" }
   | { type: "clearSelection" }
 
@@ -106,6 +107,9 @@ export function handleInsertKey(state: VimState, key: string, ev: KeyEvent): Han
   if (ev.name === "return") {
     return { consume: true, actions: [{ type: "cmd", cmd: "input.newline" }] }
   }
+  if (ev.name === "tab") {
+    return { consume: true, actions: [{ type: "insertText", text: "\t" }] }
+  }
   return PASS
 }
 
@@ -128,6 +132,8 @@ export function handleNormalKey(
     resetPending(state)
     return PASS
   }
+
+  if (ev.name === "tab") return PASS
 
   // Everything below is consumed
   const actions: Action[] = []

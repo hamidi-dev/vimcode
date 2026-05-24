@@ -8,6 +8,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-05-24
+
+### Added
+
+- Character-wise visual mode (`v`). Select text with motions, then `d`/`x` to delete, `c` to change, `y` to yank. All normal-mode motions work for extending the selection, with counts.
+- Tab inserts a tab character in insert mode. Previously fell through to OpenCode's default handler because the plugin had no way to insert text at the cursor. Now uses `insertText` on the focused editor directly.
+
+### Fixed
+
+- `j`/`k` now move the cursor up/down in multi-line text. Previously they always dispatched prompt history commands because the plugin read prompt text from `api.prompt` which doesn't exist. Now reads from `api.renderer.currentFocusedEditor.plainText`.
+- `d` in visual mode deletes the full selection instead of just the last character. The `clearSelection` action was racing the deferred `input.backspace` command.
+- Block cursor now shows in visual mode (not just normal mode).
+
 ## [0.5.0] — 2026-05-24
 
 ### Removed
@@ -133,7 +146,8 @@ First release. Modal editing for the OpenCode prompt.
 
 > `g` fires immediately as buffer-home instead of waiting for `gg`. The `yy` line tracker drifts on clicks and arrow keys. Visual mode and text objects aren't feasible without cursor position access.
 
-[Unreleased]: https://github.com/oribarilan/vimcode/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/oribarilan/vimcode/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/oribarilan/vimcode/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/oribarilan/vimcode/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/oribarilan/vimcode/compare/v0.3.3...v0.4.0
 [0.3.3]: https://github.com/oribarilan/vimcode/compare/v0.3.2...v0.3.3

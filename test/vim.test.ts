@@ -96,6 +96,12 @@ describe("handleInsertKey", () => {
     expect(cmds(r.actions)).toContain("input.submit")
   })
 
+  it("tab → consume, insertText tab", () => {
+    const r = handleInsertKey(state, "tab", ev("tab"))
+    expect(r.consume).toBe(true)
+    expect(r.actions).toContainEqual({ type: "insertText", text: "\t" })
+  })
+
   it("regular key → passthrough", () => {
     const r = handleInsertKey(state, "a", ev("a"))
     expect(r.consume).toBe(false)

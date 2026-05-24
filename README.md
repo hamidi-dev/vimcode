@@ -14,15 +14,13 @@ In normal mode, keys are vim commands. Unrecognized keys get swallowed so you do
 
 **No persistent mode indicator.** You see a toast ("NORMAL" / "INSERT" / "VISUAL") on each switch, but it fades after about a second. A permanent indicator would need the host's SolidJS runtime, which isn't available to externally installed plugins.
 
-**No tab insertion.** Tab in insert mode falls through to OpenCode's default handler. The plugin API has no "insert text at cursor" command, and the only workaround (hijacking the system clipboard) is too fragile.
-
 ## Install
 
 Add to your `tui.json` (or `.opencode/tui.json`):
 
 ```json
 {
-  "plugin": ["vimcode@git+https://github.com/oribarilan/vimcode.git#v0.5.0"]
+  "plugin": ["vimcode@git+https://github.com/oribarilan/vimcode.git#v0.6.0"]
 }
 ```
 
