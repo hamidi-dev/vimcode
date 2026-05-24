@@ -106,6 +106,10 @@ All normal-mode motions work for extending the selection: `h` `j` `k` `l` `w` `b
 - `yw`, `y$`, etc. -- only `yy` works, the rest need cursor tracking
 - `yy` accuracy -- line position is tracked with a counter that drifts on clicks and arrow keys
 
+## Roadmap
+
+Once vim coverage and stability feel solid, we plan to add configurable key bindings so you can remap or extend the defaults.
+
 ## Overlay passthrough
 
 When OpenCode shows its own UI -- command palette, `/sessions`, the `@` file/agent picker, question prompts, permission prompts -- vimcode gets out of the way. All keys pass through to the overlay until it closes.
