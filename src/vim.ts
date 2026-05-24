@@ -372,7 +372,6 @@ export function handleVisualKey(
   // Operators act on selection
   if (key === "d" || key === "x") {
     actions.push({ type: "cmd", cmd: "input.backspace" })
-    actions.push({ type: "clearSelection" })
     enterNormal(state, actions)
     return { consume: true, actions }
   }

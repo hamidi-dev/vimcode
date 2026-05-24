@@ -547,7 +547,6 @@ describe("handleVisualKey — operators", () => {
     const r = handleVisualKey(state, "d", ev("d"))
     expect(r.consume).toBe(true)
     expect(cmds(r.actions)).toContain("input.backspace")
-    expect(r.actions).toContainEqual({ type: "clearSelection" })
     expect(state.mode).toBe("normal")
     expect(r.actions).toContainEqual({ type: "mode", mode: "normal" })
   })

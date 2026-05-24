@@ -57,7 +57,7 @@ const plugin: TuiPluginModule = {
     // available for git-installed plugins. Instead, re-apply the correct
     // DECSCUSR escape on a short interval. 4 bytes at 100ms is negligible.
     const cursorInterval = setInterval(() => {
-      process.stdout.write(state.mode === "normal" ? "\x1b[2 q" : "\x1b[6 q")
+      process.stdout.write(state.mode === "insert" ? "\x1b[6 q" : "\x1b[2 q")
     }, 100)
     api.lifecycle?.onDispose?.(() => {
       clearInterval(cursorInterval)
