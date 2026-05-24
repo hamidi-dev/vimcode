@@ -1,6 +1,6 @@
 import type { TuiPluginModule } from "@opencode-ai/plugin/tui"
 import { createVimState, translateKey, handleInsertKey, handleNormalKey, type Action, type Mode } from "./vim"
-import { writeClipboard, readClipboard } from "./clipboard"
+import { writeClipboard } from "./clipboard"
 import { checkForUpdate } from "./version"
 
 const plugin: TuiPluginModule = {
@@ -27,15 +27,6 @@ const plugin: TuiPluginModule = {
             break
           case "yank":
             writeClipboard(action.text)
-            break
-          case "insert":
-            readClipboard().then((saved) => {
-              writeClipboard(action.text)
-              setTimeout(() => {
-                api.keymap.dispatchCommand("prompt.paste")
-                setTimeout(() => writeClipboard(saved), 50)
-              }, 0)
-            })
             break
         }
       }

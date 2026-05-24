@@ -6,15 +6,15 @@ Vim keybindings for the [OpenCode](https://opencode.ai) prompt. Early beta, thin
 
 Adds normal/insert mode to OpenCode's prompt input. Escape switches to normal mode, `i` goes back to insert. You get a brief toast on each switch.
 
-In insert mode, typing works normally. Enter adds a newline, Ctrl+Enter submits, Tab inserts a tab, Escape switches to normal. The file picker and autocomplete aren't affected: Enter picks the selected item and Escape closes the picker without leaving insert.
-
-Tab works through a clipboard hack. The plugin API can't insert arbitrary text at the cursor, so vimcode briefly overwrites your clipboard with a tab character, pastes it, then restores the original clipboard ~50ms later.
+In insert mode, typing works normally. Enter adds a newline, Ctrl+Enter submits, Escape switches to normal. The file picker and autocomplete aren't affected: Enter picks the selected item and Escape closes the picker without leaving insert.
 
 In normal mode, keys are vim commands. Unrecognized keys get swallowed so you don't accidentally type into the prompt. `:` opens the command palette.
 
 ## Current gaps
 
 **No persistent mode indicator.** You see a toast ("NORMAL" / "INSERT") on each switch, but it fades after about a second. A permanent indicator would need the host's SolidJS runtime, which isn't available to externally installed plugins.
+
+**No tab insertion.** Tab in insert mode falls through to OpenCode's default handler. The plugin API has no "insert text at cursor" command, and the only workaround (hijacking the system clipboard) is too fragile.
 
 **No visual mode.** `v`, `V`, `Ctrl+v` do nothing. The plugin API doesn't expose cursor position or text selection, so there's no way to select a range.
 
@@ -24,7 +24,7 @@ Add to your `tui.json` (or `.opencode/tui.json`):
 
 ```json
 {
-  "plugin": ["vimcode@git+https://github.com/oribarilan/vimcode.git#v0.4.0"]
+  "plugin": ["vimcode@git+https://github.com/oribarilan/vimcode.git#v0.5.0"]
 }
 ```
 

@@ -8,6 +8,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-05-24
+
+### Removed
+
+- Tab insertion in insert mode. The clipboard-based workaround (write tab to clipboard, paste, restore) clobbered the user's clipboard and raced with async I/O. Tab now falls through to OpenCode's default handler.
+
 ## [0.4.0] — 2026-05-24
 
 ### Added
@@ -122,12 +128,13 @@ First release. Modal editing for the OpenCode prompt.
 - `D` and `C` shortcuts for delete/change to end of line.
 - Insert entries: `i`, `a`, `A`, `o`, `O`.
 - `x`, `X`, `u`, `Ctrl+r`, `p`, `J`, `:`, `Enter`.
-- Insert mode `Enter` inserts a newline; `Tab` inserts a tab via clipboard workaround.
+- Insert mode `Enter` inserts a newline.
 - Yank copies to system clipboard via `pbcopy`.
 
 > `g` fires immediately as buffer-home instead of waiting for `gg`. The `yy` line tracker drifts on clicks and arrow keys. Visual mode and text objects aren't feasible without cursor position access.
 
-[Unreleased]: https://github.com/oribarilan/vimcode/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/oribarilan/vimcode/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/oribarilan/vimcode/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/oribarilan/vimcode/compare/v0.3.3...v0.4.0
 [0.3.3]: https://github.com/oribarilan/vimcode/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/oribarilan/vimcode/compare/v0.3.1...v0.3.2
