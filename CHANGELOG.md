@@ -8,6 +8,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ## [Unreleased]
 
+## [0.6.1] — 2026-05-25
+
+### Changed
+
+- Updated AGENTS.md with current line counts and visual mode status in known limitations.
+
+### Removed
+
+- Dead `readClipboard()` export from clipboard module.
+- Stale implementation plan (`docs/plan.md`) from initial prototype.
+
 ## [0.6.0] — 2026-05-24
 
 ### Added
@@ -146,7 +157,8 @@ First release. Modal editing for the OpenCode prompt.
 
 > `g` fires immediately as buffer-home instead of waiting for `gg`. The `yy` line tracker drifts on clicks and arrow keys. Visual mode and text objects aren't feasible without cursor position access.
 
-[Unreleased]: https://github.com/oribarilan/vimcode/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/oribarilan/vimcode/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/oribarilan/vimcode/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/oribarilan/vimcode/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/oribarilan/vimcode/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/oribarilan/vimcode/compare/v0.3.3...v0.4.0
