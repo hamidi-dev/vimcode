@@ -618,3 +618,11 @@ describe("handleVisualKey — exit and passthrough", () => {
     expect(r.actions).toEqual([])
   })
 })
+
+describe("version sync", () => {
+  it("VERSION matches package.json", async () => {
+    const pkg = await import("../package.json")
+    const { VERSION } = await import("../src/version")
+    expect(VERSION).toBe(pkg.version)
+  })
+})

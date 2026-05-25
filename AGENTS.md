@@ -28,8 +28,8 @@ vimcode is a TUI plugin for [OpenCode](https://opencode.ai). Before working on i
 src/
   index.ts       (118 lines)  Plugin entry: intercept registration, action application
   vim.ts         (457 lines)  Pure vim engine: state, handlers, command tables, types
-  clipboard.ts   (25 lines)   writeClipboard() via pbcopy
-  version.ts     (24 lines)   Version constant, GitHub update check
+  clipboard.ts   (28 lines)   writeClipboard() — cross-platform (pbcopy/xclip/xsel/wl-copy/clip.exe)
+  version.ts     (32 lines)   Version constant, GitHub update check (cached daily)
 test/
   vim.test.ts    (620 lines)  Characterization tests for all key handling branches
 ```
@@ -114,3 +114,5 @@ The `dev-tui.json` config is picked up only by `just dev`. Running `opencode` no
 **Shifted key translation** happens in `translateKey()` before the handler sees the key. Handlers work with normalized keys (`$` not `shift+4`, `G` not `shift+g`). Add new shift mappings in `translateKey`, not in handlers.
 
 **TypeScript strictness.** `strict: true` in tsconfig. No `any` in `vim.ts` or `test/`. The `api` parameter in `index.ts` is typed as `any` because the plugin types come from peer deps that may not be installed locally — that's the one acceptable use.
+
+**Cross-platform.** All code must work on macOS, Linux, and Windows. No platform-specific assumptions without a runtime `process.platform` check and fallbacks for other platforms.

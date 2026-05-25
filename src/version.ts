@@ -7,18 +7,26 @@ const LATEST_VERSION_URL =
   "https://api.github.com/repos/oribarilan/vimcode/contents/package.json?ref=main"
 
 type Toast = (opts: { message: string; variant: string; duration: number }) => void
+type KV = { get(key: string): Promise<string | undefined>; set(key: string, value: string): Promise<void> }
 
-export function checkForUpdate(toast: Toast) {
-  fetch(LATEST_VERSION_URL, {
-    headers: { Accept: "application/vnd.github.v3.raw" },
-    signal: AbortSignal.timeout(3000),
-  })
-    .then((r) => r.json())
-    .then((pkg: any) => {
-      const latest = pkg?.version
-      if (latest && latest !== VERSION) {
-        toast({ message: `vimcode update available: v${VERSION} → v${latest}`, variant: "info", duration: 5000 })
-      }
+const ONE_DAY_MS = 24 * 60 * 60 * 1000
+
+export function checkForUpdate(toast: Toast, kv: KV) {
+  kv.get("lastUpdateCheck")
+    .then((ts) => {
+      if (ts && Date.now() - Number(ts) < ONE_DAY_MS) return
+      return fetch(LATEST_VERSION_URL, {
+        headers: { Accept: "application/vnd.github.v3.raw" },
+        signal: AbortSignal.timeout(3000),
+      })
+        .then((r) => r.json())
+        .then((pkg: any) => {
+          kv.set("lastUpdateCheck", Date.now().toString())
+          const latest = pkg?.version
+          if (latest && latest !== VERSION) {
+            toast({ message: `vimcode update available: v${VERSION} → v${latest}`, variant: "info", duration: 5000 })
+          }
+        })
     })
     .catch(() => {})
 }

@@ -67,7 +67,7 @@ const plugin: TuiPluginModule = {
       process.stdout.write("\x1b[2 q")
     })
 
-    checkForUpdate((opts) => api.ui?.toast?.(opts))
+    checkForUpdate((opts) => api.ui?.toast?.(opts), api.kv)
 
     api.keymap.intercept(
       "key",
