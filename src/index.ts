@@ -5,7 +5,7 @@ import { checkForUpdate } from "./version"
 
 const plugin: TuiPluginModule = {
   id: "vimcode",
-  tui: async (api) => {
+  tui: async (api, options) => {
     const state = createVimState()
 
     const prompt = {
@@ -67,7 +67,9 @@ const plugin: TuiPluginModule = {
       process.stdout.write("\x1b[2 q")
     })
 
-    checkForUpdate((opts) => api.ui?.toast?.(opts), api.kv)
+    if (options?.updateCheck !== false) {
+      checkForUpdate((opts) => api.ui?.toast?.(opts), api.kv)
+    }
 
     api.keymap.intercept(
       "key",

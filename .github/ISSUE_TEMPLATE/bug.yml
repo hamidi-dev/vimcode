@@ -1,0 +1,37 @@
+name: Bug report
+description: Something isn't working as expected
+labels: [bug]
+body:
+  - type: input
+    id: opencode-version
+    attributes:
+      label: OpenCode version
+      placeholder: e.g. 1.15.4
+    validations:
+      required: true
+  - type: input
+    id: vimcode-version
+    attributes:
+      label: vimcode version
+      placeholder: e.g. 0.6.1
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS
+      placeholder: e.g. macOS 15.4, Ubuntu 24.04
+    validations:
+      required: true
+  - type: input
+    id: terminal
+    attributes:
+      label: Terminal
+      placeholder: e.g. iTerm2, Ghostty, Alacritty
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the bug. Include the key sequence you pressed and what you expected.
+    validations:
+      required: true

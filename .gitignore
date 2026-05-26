@@ -2,3 +2,5 @@ node_modules/
 dist/
 .opencode/
 .todo/
+package-lock.json
+bun.lock

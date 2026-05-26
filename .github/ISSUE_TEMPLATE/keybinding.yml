@@ -1,0 +1,23 @@
+name: Missing keybinding
+description: Request a vim keybinding that isn't implemented yet
+labels: [enhancement]
+body:
+  - type: input
+    id: keys
+    attributes:
+      label: Key sequence
+      placeholder: e.g. ciw, f{char}, gg
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected vim behavior
+      description: What should this key sequence do?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Anything else? Is this blocking your workflow?

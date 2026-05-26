@@ -12,32 +12,19 @@ Tracking what needs doing before the repo goes public, and what can wait.
 - [x] **Update checker cached** — now checks once per day via `api.kv` instead of every launch. Reduces GitHub API calls and respects rate limits.
 - [x] **Version sync test** — new test asserts `VERSION` in `version.ts` matches `package.json`. Catches drift at `bun test` time instead of release day.
 - [x] **Cleaned up devDependencies** — removed `@opentui/core`, `@opentui/keymap`, `@opentui/solid`, `solid-js` (zero imports, can't work at runtime anyway per plugin loader limitations). Pinned `@opencode-ai/plugin` to `^1.15.4`.
-- [x] **AGENTS.md updated** — added cross-platform code convention, updated line counts and clipboard description.
+- [x] **AGENTS.md updated** — added cross-platform code convention, updated line counts and clipboard description, replaced local paths with public URLs.
+- [x] **README: fix `g`/`gg` contradiction** — dropped `g` from the motions table and visual mode list. It's only mentioned in "What doesn't work yet" now.
+- [x] **README: platform notes section** — documents clipboard platform requirements, cursor shape terminal support, and the daily update check.
+- [x] **README: softened "Star it"** — now reads "If it's useful, a star helps others find it."
+- [x] **GitHub Actions** — `bun test` runs on push/PR to main.
+- [x] **Issue templates** — bug report (with version/OS/terminal fields) and missing keybinding request.
+- [x] **Typecheck script** — added `tsc --noEmit` to package.json scripts.
+- [x] **Dropped lockfiles** — removed `package-lock.json` and `bun.lock` from git, added both to `.gitignore`. Plugin consumers resolve their own deps.
+- [x] **Deleted `feat/search` branch** — was local-only, ~1000 lines diverged from main.
 
-## Still to do (next round)
+## Still to do (post-launch, not blocking)
 
-These came from the full review but aren't blockers. Do them before or shortly after launch.
-
-### Repo hygiene
-- [ ] **Delete or draft-PR `feat/search` branch** — ~1000 lines diverged from main. Stale branches signal abandoned work.
-- [ ] **Regenerate `package-lock.json`** — currently records deps as `peerDependencies` instead of `devDependencies` (stale from an older package.json shape). Run `npm install` to regenerate.
-- [ ] **Decide: commit lockfile or not** — this is a plugin, not an app. Most reviewers say drop it. If keeping it, be consistent about npm vs bun (scripts say `bun test`, lockfile is npm).
-
-### README
-- [ ] **Fix `g` / `gg` contradiction** — "What works" table lists `g` as "Buffer start," then "What doesn't work" explains it's wrong. Either drop `g` from the keybinding table or label it as a known-wrong placeholder.
-- [ ] **Add platform support note** — clipboard is now cross-platform, but mention that Linux needs `xclip` installed. Cursor shape depends on terminal DECSCUSR support.
-- [ ] **Document the update checker** — mention that vimcode checks GitHub for new versions once per day. Users should know about the network call.
-- [ ] **Consider softening "Star it"** in the contributing section — some people find it off-putting. "If it's useful, a star helps others find it" reads better.
-
-### AGENTS.md
-- [ ] **Replace local paths** — `~/repos/opensource/opencode/...` references only work on the author's machine. Replace with public URLs or remove.
-
-### CI / tooling
-- [ ] **Add GitHub Actions** — a workflow running `bun test` on push/PR. Shows the project is maintained and lets you add a badge.
-- [ ] **Add `typecheck` script** — `tsc --noEmit` in package.json scripts, so contributors can check types.
-- [ ] **Add issue templates** — bug report and "missing keybinding" templates would channel the issues the README invites.
-
-### Design decisions (not urgent)
-- [ ] **Update checker opt-out** — support `VIMCODE_NO_UPDATE_CHECK=1` for corporate/privacy-conscious environments.
+### Design decisions
+- [x] **Update checker opt-out** — users can set `{ "updateCheck": false }` in plugin config to disable all network requests. Documented in README Configuration section.
 - [ ] **Escape tax** — from insert mode, reaching the double-escape interrupt requires 3 escapes. Power users may want normal-mode Escape to pass through (making it 2 total). This is a design call, not a bug.
 - [ ] **Mode indicator** — toast fades after ~1s. Cursor shape (block vs bar) is the persistent signal. Consider whether the toast is still needed or just noise. Can't add a slot indicator until OpenCode's runtime module resolution works for external plugins.

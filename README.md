@@ -14,6 +14,14 @@ In normal mode, keys are vim commands. Unrecognized keys get swallowed so you do
 
 **No persistent mode indicator.** You see a toast ("NORMAL" / "INSERT" / "VISUAL") on each switch, but it fades after about a second. A permanent indicator would need the host's SolidJS runtime, which isn't available to externally installed plugins.
 
+## Platform notes
+
+Clipboard integration (`y`, `yy`, `p`) uses the system clipboard: `pbcopy` on macOS, `clip.exe` on Windows, `xclip` on Linux. Linux users need `xclip` installed (`apt install xclip` or equivalent). If the clipboard tool is missing, yank/paste still works within the session via an internal register.
+
+Cursor shape (block in normal mode, bar in insert mode) requires a terminal that supports DECSCUSR escape sequences. Most modern terminals do (iTerm2, Ghostty, Alacritty, Windows Terminal, Kitty). Some (notably older macOS Terminal.app) may not respond.
+
+The plugin checks GitHub for new versions once per day. No telemetry or usage data is collected.
+
 ## Install
 
 Add to your `tui.json` (or `.opencode/tui.json`):
@@ -26,6 +34,20 @@ Add to your `tui.json` (or `.opencode/tui.json`):
 
 To upgrade, change the version tag and restart OpenCode. The plugin will show a toast when a newer version is available.
 
+## Configuration
+
+To pass options, use the tuple form in `tui.json`:
+
+```json
+{
+  "plugin": [["vimcode@git+https://github.com/oribarilan/vimcode.git#v0.6.1", { "updateCheck": false }]]
+}
+```
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `updateCheck` | `boolean` | `true` | Check GitHub for new versions once per day. Set to `false` to disable all network requests. |
+
 ## What works
 
 ### Motions
@@ -36,7 +58,6 @@ To upgrade, change the version tag and restart OpenCode. The plugin will show a 
 | `w` `b` `e` | Word forward, backward, forward |
 | `0` `^` | Line start |
 | `$` | Line end |
-| `g` | Buffer start (should be `gg`, see below) |
 | `G` | Buffer end |
 
 All motions take counts: `3j` moves down 3 lines.
@@ -77,7 +98,7 @@ Press `v` in normal mode to enter character-wise visual mode. Motions extend the
 | `y` | Yank (copy) selection |
 | `Escape` `v` | Exit visual mode |
 
-All normal-mode motions work for extending the selection: `h` `j` `k` `l` `w` `b` `e` `0` `$` `G` `g`, with counts.
+All normal-mode motions work for extending the selection: `h` `j` `k` `l` `w` `b` `e` `0` `$` `G`, with counts.
 
 ### Other
 
@@ -125,7 +146,7 @@ vimcode is a [TUI plugin](https://opencode.ai/docs/plugins/) that registers a ke
 ## Contributing
 
 1. Try it
-2. Star it
+2. If it's useful, a star helps others find it
 3. Open issues for bugs or missing keybindings
 4. PRs welcome. See [CONTRIBUTING.md](./CONTRIBUTING.md) for dev setup and the release process.
 

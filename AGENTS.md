@@ -6,8 +6,7 @@ vimcode is a TUI plugin for [OpenCode](https://opencode.ai). Before working on i
 
 **References (read these, don't guess):**
 - Official plugin docs: https://opencode.ai/docs/plugins/
-- TUI plugin spec: `~/repos/opensource/opencode/packages/opencode/specs/tui-plugins.md`
-- Smoke test (1000-line API exercise): `~/repos/opensource/opencode/.opencode/plugins/tui-smoke.tsx`
+- TUI plugin spec: https://github.com/sst/opencode/blob/dev/packages/opencode/specs/tui-plugins.md
 - Plugin types: `@opencode-ai/plugin/tui` exports `TuiPluginModule`, `TuiPluginApi`
 - A good reference TUI plugin with slots/keymap/routes: [opencode-workspaces](https://github.com/stephengolub/opencode-workspaces)
 
