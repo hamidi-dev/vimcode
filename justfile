@@ -13,7 +13,7 @@ lint:
     bunx biome check .
 
 # Auto-fix formatting and lint
-format:
+lint-fix:
     bunx biome check --write .
 
 # Run lint + tests
