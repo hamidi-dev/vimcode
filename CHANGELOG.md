@@ -8,15 +8,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ## [Unreleased]
 
+## [0.8.0] — 2026-05-26
+
 ### Added
 
 - Yank with motions: `yw`, `yb`, `ye`, `y$`, `y0`, `y^`, `yh`, `yl`, `yj`, `yk`, `yG`. Previously only `yy` worked.
 - Plugin init sanity test that catches crashes from hostile API shapes before release.
-- `just test` recipe in justfile.
+- Biome for linting and formatting, enforced in CI.
+- `just test`, `just lint`, `just lint-fix`, `just check` recipes.
 
 ### Fixed
 
-- Plugin failed to load when `api.kv` didn't match the expected interface (e.g. object with no `.get` method). Broke all installs on some OpenCode versions.
+- Plugin failed to load when `api.kv` didn't match the expected interface (e.g. object with no `.get` method). Broke installs on some OpenCode versions.
 
 ### Changed
 
@@ -197,7 +200,8 @@ First release. Modal editing for the OpenCode prompt.
 
 > `g` fires immediately as buffer-home instead of waiting for `gg`. The `yy` line tracker drifts on clicks and arrow keys. Visual mode and text objects aren't feasible without cursor position access.
 
-[Unreleased]: https://github.com/oribarilan/vimcode/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/oribarilan/vimcode/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/oribarilan/vimcode/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/oribarilan/vimcode/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/oribarilan/vimcode/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/oribarilan/vimcode/compare/v0.5.0...v0.6.0
