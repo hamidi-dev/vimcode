@@ -12,6 +12,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 - `Ctrl+O` in insert mode — run one normal-mode command, then return to insert. Motions, operators, counts, and `r{char}` all work.
 - `.` in normal mode repeats the last command-based change. For example, `dw..` deletes three words.
+- `V` selects the current line and enters visual mode.
 
 ### Fixed
 

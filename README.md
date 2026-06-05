@@ -126,13 +126,14 @@ Counts work on both operator and motion: `2dd` deletes 2 lines, `d3w` deletes 3 
 
 ### Visual mode
 
-Press `v` in normal mode to enter character-wise visual mode. Motions extend the selection, operators act on it:
+Press `v` in normal mode to enter character-wise visual mode. Press `V` to select the current line. Motions extend the selection, operators act on it:
 
 | Key | Action |
 |-----|--------|
 | `d` `x` | Delete selection |
 | `c` | Delete selection, enter insert mode |
 | `y` | Yank (copy) selection |
+| `V` | Select current line |
 | `Escape` `v` | Exit visual mode |
 
 All normal-mode motions work for extending the selection: `h` `j` `k` `l` `w` `b` `e` `0` `$` `G`, with counts.
@@ -160,7 +161,7 @@ All normal-mode motions work for extending the selection: `h` `j` `k` `l` `w` `b
 
 ## Known gaps
 
-- `V`, `Ctrl+v` - only character-wise visual mode (`v`) is supported, no line-wise or block
+- `Ctrl+v` - block visual mode is not supported
 - `ciw`, `di"`, etc. (text objects) - not yet implemented
 - `.` does not yet repeat range-computed changes like `de` or `dG`
 - No persistent mode indicator - the toast fades after about a second. Cursor shape is the persistent signal, but a status bar indicator would need the host's SolidJS runtime, which external plugins can't access.
