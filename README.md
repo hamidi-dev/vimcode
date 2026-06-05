@@ -146,6 +146,7 @@ All normal-mode motions work for extending the selection: `h` `j` `k` `l` `w` `b
 | `x` | Delete character |
 | `u` | Undo |
 | `Ctrl+r` | Redo |
+| `.` | Repeat last command-based change (`dw`, `dd`, `x`, `r{char}`, etc.) |
 | `p` | Paste from yank register |
 | `:` | Command palette |
 | `/` | Jump to message (session timeline) |
@@ -161,6 +162,7 @@ All normal-mode motions work for extending the selection: `h` `j` `k` `l` `w` `b
 
 - `V`, `Ctrl+v` - only character-wise visual mode (`v`) is supported, no line-wise or block
 - `ciw`, `di"`, etc. (text objects) - not yet implemented
+- `.` does not yet repeat range-computed changes like `de` or `dG`
 - No persistent mode indicator - the toast fades after about a second. Cursor shape is the persistent signal, but a status bar indicator would need the host's SolidJS runtime, which external plugins can't access.
 
 Configurable key bindings are next once the core vim coverage stabilizes.

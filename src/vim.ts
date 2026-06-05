@@ -10,6 +10,7 @@ export type Action =
   | { type: "yankSelection" }
   | { type: "clearSelection" }
   | { type: "deleteRange"; start: number; end: number }
+  | { type: "saveUndoSnapshot" }
   | { type: "undo" }
   | { type: "cursorTo"; offset: number }
   | { type: "selectRange"; start: number; end: number };
@@ -26,6 +27,8 @@ export type VimState = {
   count: number;
   yankRegister: string;
   oneShotNormal: boolean;
+  lastChange: Action[] | null;
+  passNextKey: boolean;
 };
 
 export type KeyEvent = {
@@ -34,6 +37,7 @@ export type KeyEvent = {
   ctrl?: boolean;
   meta?: boolean;
   super?: boolean;
+  leader?: boolean;
   eventType?: string;
 };
 
@@ -86,7 +90,16 @@ const PASS: HandlerResult = { consume: false, actions: [] };
 const _CONSUME: HandlerResult = { consume: true, actions: [] };
 
 export function createVimState(): VimState {
-  return { mode: "insert", pendingOp: null, pendingChar: null, count: 0, yankRegister: "", oneShotNormal: false };
+  return {
+    mode: "insert",
+    pendingOp: null,
+    pendingChar: null,
+    count: 0,
+    yankRegister: "",
+    oneShotNormal: false,
+    lastChange: null,
+    passNextKey: false,
+  };
 }
 
 export function endOfWord(text: string, offset: number, count = 1): number {
@@ -153,7 +166,21 @@ export function handleInsertKey(state: VimState, _key: string, ev: KeyEvent): Ha
 }
 
 export function handleNormalKey(state: VimState, key: string, ev: KeyEvent, prompt: PromptAccess): HandlerResult {
+  if (ev.leader) {
+    resetPending(state);
+    state.passNextKey = true;
+    return PASS;
+  }
+  if (ev.name === "tab") {
+    resetPending(state);
+    state.passNextKey = true;
+    return PASS;
+  }
   if (ev.meta || ev.super) return PASS;
+  if (state.passNextKey) {
+    state.passNextKey = false;
+    return PASS;
+  }
   if (ev.ctrl) {
     if (ev.name === "r") {
       resetPending(state);
@@ -180,7 +207,7 @@ export function handleNormalKey(state: VimState, key: string, ev: KeyEvent, prom
     pushN(actions, "input.delete", n);
     actions.push({ type: "insertText", text: key.repeat(n) });
     state.pendingChar = null;
-    return { consume: true, actions };
+    return finishChange(state, actions);
   }
 
   // Pending g prefix (gg, ge, etc.)
@@ -196,14 +223,16 @@ export function handleNormalKey(state: VimState, key: string, ev: KeyEvent, prom
     return { consume: true, actions };
   }
 
-  if (ev.name === "tab") return PASS;
-
   // Everything below is consumed
   const actions: Action[] = [];
 
   if (/[1-9]/.test(key) || (key === "0" && state.count > 0)) {
     state.count = state.count * 10 + parseInt(key, 10);
     return { consume: true, actions };
+  }
+
+  if (key === ".") {
+    return repeatLastChange(state);
   }
 
   if (ev.name === "return") {
@@ -252,12 +281,12 @@ export function handleNormalKey(state: VimState, key: string, ev: KeyEvent, prom
     if (state.yankRegister) actions.push({ type: "yank", text: state.yankRegister });
     actions.push({ type: "cmd", cmd: "prompt.paste" });
     resetPending(state);
-    return { consume: true, actions };
+    return finishChange(state, actions);
   }
 
   if (key === "X") {
     pushN(actions, "input.backspace", consumeCount(state));
-    return { consume: true, actions };
+    return finishChange(state, actions);
   }
 
   if (key === "J") {
@@ -266,7 +295,7 @@ export function handleNormalKey(state: VimState, key: string, ev: KeyEvent, prom
       actions.push({ type: "cmd", cmd: "input.line.end" });
       actions.push({ type: "cmd", cmd: "input.delete" });
     }
-    return { consume: true, actions };
+    return finishChange(state, actions);
   }
 
   // Operators: d, c, y
@@ -284,6 +313,8 @@ export function handleNormalKey(state: VimState, key: string, ev: KeyEvent, prom
       } else {
         pushN(actions, "input.delete.line", n);
         if (key === "c") enterInsert(state, actions);
+        else resetPending(state);
+        return finishChange(state, actions);
       }
       state.pendingOp = null;
       return { consume: true, actions };
@@ -295,13 +326,13 @@ export function handleNormalKey(state: VimState, key: string, ev: KeyEvent, prom
   if (key === "D") {
     actions.push({ type: "cmd", cmd: "input.delete.to.line.end" });
     resetPending(state);
-    return { consume: true, actions };
+    return finishChange(state, actions);
   }
 
   if (key === "C") {
     actions.push({ type: "cmd", cmd: "input.delete.to.line.end" });
     enterInsert(state, actions);
-    return { consume: true, actions };
+    return finishChange(state, actions);
   }
 
   // Pending operator + e (end-of-word needs special handling)
@@ -318,6 +349,7 @@ export function handleNormalKey(state: VimState, key: string, ev: KeyEvent, prom
       actions.push({ type: "deleteRange", start: offset, end: target });
       if (state.pendingOp === "c") enterInsert(state, actions);
       else resetPending(state);
+      clearLastChange(state);
     }
     return { consume: true, actions };
   }
@@ -340,14 +372,14 @@ export function handleNormalKey(state: VimState, key: string, ev: KeyEvent, prom
       pushN(actions, "input.delete.line", n + 1);
       if (state.pendingOp === "c") enterInsert(state, actions);
       else resetPending(state);
-      return { consume: true, actions };
+      return finishChange(state, actions);
     }
     if (key === "k") {
       pushN(actions, "input.move.up", n);
       pushN(actions, "input.delete.line", n + 1);
       if (state.pendingOp === "c") enterInsert(state, actions);
       else resetPending(state);
-      return { consume: true, actions };
+      return finishChange(state, actions);
     }
     if (key === "G") {
       consumeCount(state);
@@ -356,6 +388,7 @@ export function handleNormalKey(state: VimState, key: string, ev: KeyEvent, prom
       actions.push({ type: "deleteRange", start: offset, end: Math.max(0, text.length - 1) });
       if (state.pendingOp === "c") enterInsert(state, actions);
       else resetPending(state);
+      clearLastChange(state);
       return { consume: true, actions };
     }
 
@@ -364,7 +397,7 @@ export function handleNormalKey(state: VimState, key: string, ev: KeyEvent, prom
       pushN(actions, deleteCmd, n);
       if (state.pendingOp === "c") enterInsert(state, actions);
       else resetPending(state);
-      return { consume: true, actions };
+      return finishChange(state, actions);
     }
 
     resetPending(state);
@@ -399,7 +432,7 @@ export function handleNormalKey(state: VimState, key: string, ev: KeyEvent, prom
 
   if (key === "x") {
     pushN(actions, "input.delete", consumeCount(state));
-    return { consume: true, actions };
+    return finishChange(state, actions);
   }
 
   if (key === "r") {
@@ -459,7 +492,21 @@ export function handleNormalKey(state: VimState, key: string, ev: KeyEvent, prom
 }
 
 export function handleVisualKey(state: VimState, key: string, ev: KeyEvent): HandlerResult {
+  if (ev.leader) {
+    resetPending(state);
+    state.passNextKey = true;
+    return PASS;
+  }
+  if (ev.name === "tab") {
+    resetPending(state);
+    state.passNextKey = true;
+    return PASS;
+  }
   if (ev.meta || ev.super) return PASS;
+  if (state.passNextKey) {
+    state.passNextKey = false;
+    return PASS;
+  }
   if (ev.ctrl) return PASS;
 
   const actions: Action[] = [];
@@ -542,6 +589,35 @@ function resetPending(state: VimState) {
   state.pendingOp = null;
   state.pendingChar = null;
   state.count = 0;
+}
+
+function finishChange(state: VimState, actions: Action[]): HandlerResult {
+  const repeatableActions: Action[] = [{ type: "saveUndoSnapshot" }, ...actions];
+  state.lastChange = cloneActions(repeatableActions);
+  return { consume: true, actions: repeatableActions };
+}
+
+function clearLastChange(state: VimState) {
+  state.lastChange = null;
+}
+
+function repeatLastChange(state: VimState): HandlerResult {
+  const n = consumeCount(state);
+  if (!state.lastChange) return { consume: true, actions: [] };
+
+  const actions: Action[] = [];
+  for (let i = 0; i < n; i++) actions.push(...cloneActions(state.lastChange));
+  for (const action of actions) {
+    if (action.type === "mode") {
+      state.mode = action.mode;
+      state.oneShotNormal = false;
+    }
+  }
+  return { consume: true, actions };
+}
+
+function cloneActions(actions: Action[]): Action[] {
+  return actions.map((action) => ({ ...action }));
 }
 
 function consumeCount(state: VimState): number {

@@ -11,6 +11,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 ### Added
 
 - `Ctrl+O` in insert mode — run one normal-mode command, then return to insert. Motions, operators, counts, and `r{char}` all work.
+- `.` in normal mode repeats the last command-based change. For example, `dw..` deletes three words.
+
+### Fixed
+
+- Counted delete/change commands such as `3dw` now undo in one `u` press instead of one undo per repeated host command.
+- Normal/visual-mode leader keys now pass through both the configured prefix key and the following key, so OpenCode bindings like `<leader>e`, `<leader>l`, and `<leader>n` can run even when vimcode is in normal mode.
 
 ## [0.10.0] — 2026-05-31
 

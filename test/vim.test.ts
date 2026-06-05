@@ -26,12 +26,20 @@ function deleteRanges(actions: Action[]): Array<{ start: number; end: number }> 
     .map((a) => ({ start: a.start, end: a.end }));
 }
 
-const ev = (name: string, opts?: { shift?: boolean; ctrl?: boolean; meta?: boolean; super?: boolean }) => ({
+function saveUndoSnapshots(actions: Action[]): Action[] {
+  return actions.filter((a) => a.type === "saveUndoSnapshot");
+}
+
+const ev = (
+  name: string,
+  opts?: { shift?: boolean; ctrl?: boolean; meta?: boolean; super?: boolean; leader?: boolean },
+) => ({
   name,
   shift: opts?.shift ?? false,
   ctrl: opts?.ctrl ?? false,
   meta: opts?.meta ?? false,
   super: opts?.super ?? false,
+  leader: opts?.leader ?? false,
 });
 
 const mockPrompt: PromptAccess = {
@@ -346,6 +354,18 @@ describe("handleNormalKey — operators", () => {
     expect(cmds(r.actions)).toEqual(["input.delete.word.forward"]);
   });
 
+  it("3dw saves one undo snapshot around the repeated deletes", () => {
+    handleNormalKey(state, "3", ev("3"), mockPrompt);
+    handleNormalKey(state, "d", ev("d"), mockPrompt);
+    const r = handleNormalKey(state, "w", ev("w"), mockPrompt);
+    expect(saveUndoSnapshots(r.actions)).toHaveLength(1);
+    expect(cmds(r.actions)).toEqual([
+      "input.delete.word.forward",
+      "input.delete.word.forward",
+      "input.delete.word.forward",
+    ]);
+  });
+
   it("d$ dispatches input.delete.to.line.end", () => {
     handleNormalKey(state, "d", ev("d"), mockPrompt);
     const r = handleNormalKey(state, "$", ev("4", { shift: true }), mockPrompt);
@@ -558,6 +578,59 @@ describe("handleNormalKey — special keys", () => {
     const r = handleNormalKey(state, "escape", ev("escape"), mockPrompt);
     expect(r.consume).toBe(false);
     expect(state.pendingOp).toBeNull();
+  });
+
+  it(". repeats the last change", () => {
+    handleNormalKey(state, "d", ev("d"), mockPrompt);
+    handleNormalKey(state, "w", ev("w"), mockPrompt);
+
+    const r = handleNormalKey(state, ".", ev("."), mockPrompt);
+
+    expect(saveUndoSnapshots(r.actions)).toHaveLength(1);
+    expect(cmds(r.actions)).toEqual(["input.delete.word.forward"]);
+  });
+
+  it("2. repeats the last change twice", () => {
+    handleNormalKey(state, "d", ev("d"), mockPrompt);
+    handleNormalKey(state, "w", ev("w"), mockPrompt);
+    handleNormalKey(state, "2", ev("2"), mockPrompt);
+
+    const r = handleNormalKey(state, ".", ev("."), mockPrompt);
+
+    expect(saveUndoSnapshots(r.actions)).toHaveLength(2);
+    expect(cmds(r.actions)).toEqual(["input.delete.word.forward", "input.delete.word.forward"]);
+  });
+
+  it("leader prefix passes through leader and the following key", () => {
+    const leader = handleNormalKey(state, "tab", ev("tab", { leader: true }), mockPrompt);
+    expect(leader.consume).toBe(false);
+    expect(state.passNextKey).toBe(true);
+
+    const next = handleNormalKey(state, "e", ev("e"), mockPrompt);
+    expect(next.consume).toBe(false);
+    expect(next.actions).toEqual([]);
+    expect(state.passNextKey).toBe(false);
+  });
+
+  it("leader prefix passthrough only affects one following key", () => {
+    handleNormalKey(state, "tab", ev("tab", { leader: true }), mockPrompt);
+    handleNormalKey(state, "e", ev("e"), mockPrompt);
+
+    const r = handleNormalKey(state, "e", ev("e"), mockPrompt);
+
+    expect(r.consume).toBe(true);
+    expect(cursorTos(r.actions)).toEqual([4]);
+  });
+
+  it("tab prefix still passes through when leader config is unavailable", () => {
+    const tab = handleNormalKey(state, "tab", ev("tab"), mockPrompt);
+    expect(tab.consume).toBe(false);
+    expect(state.passNextKey).toBe(true);
+
+    const next = handleNormalKey(state, "n", ev("n"), mockPrompt);
+    expect(next.consume).toBe(false);
+    expect(next.actions).toEqual([]);
+    expect(state.passNextKey).toBe(false);
   });
 });
 
@@ -874,6 +947,18 @@ describe("handleVisualKey — exit and passthrough", () => {
     expect(r.consume).toBe(true);
     expect(r.actions).toEqual([]);
   });
+
+  it("leader prefix passes through leader and the following key", () => {
+    const leader = handleVisualKey(state, "tab", ev("tab", { leader: true }));
+    expect(leader.consume).toBe(false);
+    expect(state.passNextKey).toBe(true);
+
+    const r = handleVisualKey(state, "n", ev("n"));
+
+    expect(r.consume).toBe(false);
+    expect(r.actions).toEqual([]);
+    expect(state.passNextKey).toBe(false);
+  });
 });
 
 // ── Ctrl+O one-shot normal mode ───────────────────────────
@@ -1082,6 +1167,63 @@ describe("plugin init", () => {
   });
 });
 
+describe("configured leader passthrough", () => {
+  async function setup(leader: unknown) {
+    const plugin = (await import("../src/index")).default;
+    const editor = {
+      plainText: "hello world",
+      cursorOffset: 0,
+      visualCursor: { logicalRow: 0 },
+      cursorStyle: { style: "block" as const, blinking: true },
+      insertText: () => {},
+      editorView: { resetSelection: () => {} },
+    };
+    // biome-ignore lint/suspicious/noExplicitAny: test mock
+    let handler: (ctx: any) => void;
+    const api = {
+      renderer: { currentFocusedEditor: editor, currentFocusedRenderable: editor },
+      ui: { toast: () => {}, dialog: { open: false } },
+      keymap: {
+        intercept: (_e: string, h: typeof handler) => {
+          handler = h;
+        },
+        dispatchCommand: () => ({ ok: false }),
+      },
+      route: { current: { name: "home", params: {} } },
+      state: { session: { question: () => [], permission: () => [] } },
+      tuiConfig: { keybinds: { leader } },
+      lifecycle: { onDispose: () => {} },
+      kv: {},
+    };
+
+    // biome-ignore lint/suspicious/noExplicitAny: mock API
+    await plugin.tui(api as any, undefined, undefined as any);
+
+    const press = (name: string, opts: Record<string, boolean> = {}) => {
+      let consumed = false;
+      handler?.({ event: { name, eventType: "press", ...opts }, consume: () => (consumed = true) });
+      return consumed;
+    };
+
+    press("escape");
+    return { press };
+  }
+
+  it("does not consume a configured tab leader or the following key", async () => {
+    const { press } = await setup("tab");
+
+    expect(press("tab")).toBe(false);
+    expect(press("n")).toBe(false);
+  });
+
+  it("does not consume the default ctrl+x leader or the following key", async () => {
+    const { press } = await setup(undefined);
+
+    expect(press("x", { ctrl: true })).toBe(false);
+    expect(press("n")).toBe(false);
+  });
+});
+
 // ── undo snapshot integration ─────────────────────────────
 
 describe("undo snapshot — deleteRange + u", () => {
@@ -1194,5 +1336,41 @@ describe("undo snapshot — deleteRange + u", () => {
     // input.undo is dispatched via setTimeout
     await new Promise((r) => setTimeout(r, 20));
     expect(dispatched).toContain("input.undo");
+  });
+
+  it("u after 3dw restores the full buffer via editBuffer.setText", async () => {
+    const original = "hello world second line third line";
+    const { press, calls, dispatched, getCursor } = await setup(original, 0);
+
+    press("3");
+    press("d");
+    press("w");
+
+    calls.length = 0;
+    press("u");
+
+    expect(calls).toContainEqual({ method: "setText", args: [original] });
+    expect(getCursor()).toBe(0);
+    expect(dispatched).not.toContain("input.undo");
+  });
+
+  it("u after dw.. walks back each repeated change snapshot", async () => {
+    const original = "hello world second line third line";
+    const { press, calls, dispatched } = await setup(original, 0);
+
+    press("d");
+    press("w");
+    press(".");
+    press(".");
+
+    calls.length = 0;
+    dispatched.length = 0;
+
+    press("u");
+    press("u");
+    press("u");
+
+    expect(calls.filter((c) => c.method === "setText")).toHaveLength(3);
+    expect(dispatched).not.toContain("input.undo");
   });
 });

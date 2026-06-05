@@ -18,10 +18,10 @@ const plugin: TuiPluginModule = {
     const startMode = options?.startMode === "normal" ? "normal" : "insert";
     state.mode = startMode;
 
-    // Snapshot for single-step undo of deleteRange operations.
-    // The host editor's undo system splits multi-line deletions into
-    // multiple entries, so we save/restore the buffer ourselves.
-    let undoSnapshot: { text: string; cursor: number } | null = null;
+    // Snapshots for single-step undo of vim changes.
+    // The host editor's undo system splits repeated commands into multiple
+    // entries, so we save/restore the buffer ourselves.
+    let undoSnapshots: Array<{ text: string; cursor: number }> = [];
 
     const prompt = {
       getLine: (n: number) => getInputText().split("\n")[n] ?? "",
@@ -38,11 +38,12 @@ const plugin: TuiPluginModule = {
     }
 
     function applyActions(actions: Action[]) {
+      let keepUndoSnapshotForBatch = false;
       for (const action of actions) {
         // Any buffer-modifying action (other than our own deleteRange/undo)
         // invalidates the undo snapshot.
-        if (action.type === "cmd" || action.type === "insertText") {
-          undoSnapshot = null;
+        if ((action.type === "cmd" || action.type === "insertText") && !keepUndoSnapshotForBatch) {
+          undoSnapshots = [];
         }
         switch (action.type) {
           case "cmd":
@@ -83,7 +84,7 @@ const plugin: TuiPluginModule = {
             const editor = api.renderer?.currentFocusedEditor;
             const eb = editor?.editBuffer;
             if (eb?.deleteRange) {
-              undoSnapshot = { text: editor.plainText ?? "", cursor: editor.cursorOffset ?? 0 };
+              undoSnapshots.push({ text: editor.plainText ?? "", cursor: editor.cursorOffset ?? 0 });
               const text = editor.plainText ?? "";
               const [sl, sc] = offsetToLineCol(text, action.start);
               const [el, ec] = offsetToLineCol(text, action.end + 1);
@@ -91,7 +92,14 @@ const plugin: TuiPluginModule = {
             }
             break;
           }
+          case "saveUndoSnapshot": {
+            const editor = api.renderer?.currentFocusedEditor;
+            if (editor) undoSnapshots.push({ text: editor.plainText ?? "", cursor: editor.cursorOffset ?? 0 });
+            keepUndoSnapshotForBatch = true;
+            break;
+          }
           case "undo": {
+            const undoSnapshot = undoSnapshots.pop();
             if (undoSnapshot) {
               const editor = api.renderer?.currentFocusedEditor;
               const eb = editor?.editBuffer;
@@ -99,7 +107,6 @@ const plugin: TuiPluginModule = {
                 eb.setText(undoSnapshot.text);
                 editor.cursorOffset = undoSnapshot.cursor;
               }
-              undoSnapshot = null;
             } else {
               setTimeout(() => api.keymap.dispatchCommand("input.undo"), 0);
             }
@@ -174,14 +181,15 @@ const plugin: TuiPluginModule = {
           }
         }
 
-        const key = translateKey(ctx.event);
+        const event = { ...ctx.event, leader: isLeaderKey(ctx.event, getLeaderBinding(api)) };
+        const key = translateKey(event);
         const handlerMode = state.mode;
         const result =
           state.mode === "insert"
-            ? handleInsertKey(state, key, ctx.event)
+            ? handleInsertKey(state, key, event)
             : state.mode === "visual"
-              ? handleVisualKey(state, key, ctx.event)
-              : handleNormalKey(state, key, ctx.event, prompt);
+              ? handleVisualKey(state, key, event)
+              : handleNormalKey(state, key, event, prompt);
         if (handlerMode === "normal") finishOneShotIfComplete(state, result);
         if (result.consume) ctx.consume();
         applyActions(result.actions);
@@ -195,6 +203,68 @@ function offsetToLineCol(text: string, offset: number): [number, number] {
   const before = text.substring(0, offset);
   const lines = before.split("\n");
   return [lines.length - 1, lines[lines.length - 1].length];
+}
+
+function getLeaderBinding(api: any): unknown {
+  return api.tuiConfig?.keybinds?.leader ?? api.state?.config?.keybinds?.leader ?? "ctrl+x";
+}
+
+function isLeaderKey(
+  ev: { name: string; ctrl?: boolean; shift?: boolean; meta?: boolean; super?: boolean },
+  binding: unknown,
+): boolean {
+  if (binding === false || binding === "none") return false;
+  if (Array.isArray(binding)) return binding.some((entry) => isLeaderKey(ev, entry));
+  if (typeof binding === "object" && binding !== null) {
+    const value = binding as {
+      key?: unknown;
+      name?: unknown;
+      ctrl?: boolean;
+      shift?: boolean;
+      meta?: boolean;
+      super?: boolean;
+    };
+    if (value.key !== undefined) return isLeaderKey(ev, value.key);
+    if (typeof value.name === "string") return matchesKeySpec(ev, value);
+  }
+  if (typeof binding !== "string") return false;
+  return binding.split(",").some((part) => matchesKeySpec(ev, parseKeySpec(part)));
+}
+
+function parseKeySpec(spec: string): {
+  name: string;
+  ctrl?: boolean;
+  shift?: boolean;
+  meta?: boolean;
+  super?: boolean;
+} {
+  const parts = spec
+    .trim()
+    .toLowerCase()
+    .split("+")
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const key = parts.at(-1) ?? "";
+  return {
+    name: key,
+    ctrl: parts.includes("ctrl"),
+    shift: parts.includes("shift"),
+    meta: parts.includes("alt") || parts.includes("meta"),
+    super: parts.includes("cmd") || parts.includes("super"),
+  };
+}
+
+function matchesKeySpec(
+  ev: { name: string; ctrl?: boolean; shift?: boolean; meta?: boolean; super?: boolean },
+  spec: { name: string; ctrl?: boolean; shift?: boolean; meta?: boolean; super?: boolean },
+): boolean {
+  return (
+    ev.name.toLowerCase() === spec.name.toLowerCase() &&
+    Boolean(ev.ctrl) === Boolean(spec.ctrl) &&
+    Boolean(ev.shift) === Boolean(spec.shift) &&
+    Boolean(ev.meta) === Boolean(spec.meta) &&
+    Boolean(ev.super) === Boolean(spec.super)
+  );
 }
 
 export default plugin;
