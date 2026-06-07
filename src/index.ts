@@ -8,6 +8,8 @@ import {
   handleInsertKey,
   handleNormalKey,
   handleVisualKey,
+  matchesLeader,
+  parseLeaderKey,
   translateKey,
 } from "./vim";
 
@@ -17,6 +19,12 @@ const plugin: TuiPluginModule = {
     const state = createVimState();
     const startMode = options?.startMode === "normal" ? "normal" : "insert";
     state.mode = startMode;
+    const leader = options?.leader ? parseLeaderKey(options.leader) : null;
+
+    // Track whether the previous key was the leader, so the follow-up
+    // key also passes through to OpenCode's leader system.
+    let leaderPending = false;
+    let leaderTimer: ReturnType<typeof setTimeout> | null = null;
 
     // Snapshot for single-step undo of deleteRange operations.
     // The host editor's undo system splits multi-line deletions into
@@ -131,6 +139,9 @@ const plugin: TuiPluginModule = {
     // in terminals that don't support DECSCUSR (e.g. macOS Terminal.app).
     const cursorInterval = setInterval(syncCursorStyle, 100);
     api.lifecycle?.onDispose?.(() => clearInterval(cursorInterval));
+    api.lifecycle?.onDispose?.(() => {
+      if (leaderTimer) clearTimeout(leaderTimer);
+    });
 
     if (options?.updateCheck !== false) {
       checkForUpdate((opts) => api.ui?.toast?.(opts), api.kv);
@@ -175,10 +186,28 @@ const plugin: TuiPluginModule = {
         }
 
         const key = translateKey(ctx.event);
+
+        // In normal/visual mode, let the leader key and its follow-up
+        // pass through so OpenCode's leader bindings work.
+        if (leader && state.mode !== "insert") {
+          if (leaderPending) {
+            leaderPending = false;
+            if (leaderTimer) clearTimeout(leaderTimer);
+            return;
+          }
+          if (matchesLeader(ctx.event, leader)) {
+            leaderPending = true;
+            leaderTimer = setTimeout(() => {
+              leaderPending = false;
+            }, 2000);
+            return;
+          }
+        }
+
         const handlerMode = state.mode;
         const result =
           state.mode === "insert"
-            ? handleInsertKey(state, key, ctx.event)
+            ? handleInsertKey(state, key, ctx.event, leader)
             : state.mode === "visual"
               ? handleVisualKey(state, key, ctx.event)
               : handleNormalKey(state, key, ctx.event, prompt);
