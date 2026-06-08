@@ -6,7 +6,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 > Add your changes to `[Unreleased]`. They get moved into a version heading at release time.
 
-## [Unreleased]
+## [0.13.0] — 2026-06-09
 
 ### Changed
 
