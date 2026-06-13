@@ -104,6 +104,7 @@ The plugin checks GitHub for new versions once per day on startup. No other netw
 | `w` `b` `e` | Word forward, backward, end of word |
 | `0` `^` | Line start |
 | `$` | Line end |
+| `gg` | Buffer start |
 | `G` | Buffer end |
 
 All motions take counts: `3j` moves down 3 lines.
@@ -169,6 +170,7 @@ All normal-mode motions work for extending the selection: `h` `j` `k` `l` `w` `b
 | `p` | Paste from yank register |
 | `:` | Command palette |
 | `:q` `:quit` `:wq` | Quit OpenCode (via command palette) |
+| `:vim` | Toggle vim mode on/off (persisted across restarts) |
 | `/` | Jump to message (session timeline) |
 | `[` `]` | Scroll conversation half-page up/down |
 | `{` `}` | Jump to previous/next message |

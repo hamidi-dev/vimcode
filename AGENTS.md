@@ -57,7 +57,7 @@ This API surface makes text objects (`ciw`, `di"`), direct cursor manipulation, 
 
 ```
 src/
-  index.ts       (342 lines)  Plugin entry: intercept registration, action application
+  index.ts       (345 lines)  Plugin entry: intercept registration, action application
   vim.ts         (608 lines)  Pure vim engine: state, handlers, command tables, types
   leader.ts      (73 lines)   Leader key matching: matchesKeyLike, findMatchingLeader, leaderChar
   clipboard.ts   (19 lines)   writeClipboard() — cross-platform (pbcopy/xclip/xsel/wl-copy/clip.exe)
