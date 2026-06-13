@@ -27,6 +27,10 @@ function deleteRanges(actions: Action[]): Array<{ start: number; end: number }> 
     .map((a) => ({ start: a.start, end: a.end }));
 }
 
+function saveUndoSnapshots(actions: Action[]): Action[] {
+  return actions.filter((a) => a.type === "saveUndoSnapshot");
+}
+
 const ev = (name: string, opts?: { shift?: boolean; ctrl?: boolean; meta?: boolean; super?: boolean }) => ({
   name,
   shift: opts?.shift ?? false,
@@ -414,6 +418,18 @@ describe("handleNormalKey — operators", () => {
     handleNormalKey(state, "d", ev("d"), mockPrompt);
     const r = handleNormalKey(state, "w", ev("w"), mockPrompt);
     expect(cmds(r.actions)).toEqual(["input.delete.word.forward"]);
+  });
+
+  it("3dw saves one undo snapshot around the repeated deletes", () => {
+    handleNormalKey(state, "3", ev("3"), mockPrompt);
+    handleNormalKey(state, "d", ev("d"), mockPrompt);
+    const r = handleNormalKey(state, "w", ev("w"), mockPrompt);
+    expect(saveUndoSnapshots(r.actions)).toHaveLength(1);
+    expect(cmds(r.actions)).toEqual([
+      "input.delete.word.forward",
+      "input.delete.word.forward",
+      "input.delete.word.forward",
+    ]);
   });
 
   it("d$ dispatches input.delete.to.line.end", () => {
@@ -1264,5 +1280,21 @@ describe("undo snapshot — deleteRange + u", () => {
     // input.undo is dispatched via setTimeout
     await new Promise((r) => setTimeout(r, 20));
     expect(dispatched).toContain("input.undo");
+  });
+
+  it("u after 3dw restores the full buffer via editBuffer.setText", async () => {
+    const original = "hello world second line third line";
+    const { press, calls, dispatched, getCursor } = await setup(original, 0);
+
+    press("3");
+    press("d");
+    press("w");
+
+    calls.length = 0;
+    press("u");
+
+    expect(calls).toContainEqual({ method: "setText", args: [original] });
+    expect(getCursor()).toBe(0);
+    expect(dispatched).not.toContain("input.undo");
   });
 });
